@@ -26,6 +26,18 @@ services:
       - traefik
       - intern
 
+  adminer:
+    image: adminer
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.$APP_NAME_ADMINER.entrypoints=websecure"
+      - "traefik.http.routers.$APP_NAME_ADMINER.rule=Host($APP_URL_ADMINER)"
+      - "traefik.http.routers.$APP_NAME_ADMINER.tls.certresolver=letsencrypt"
+      - "traefik.http.services.$APP_NAME_ADMINER.loadbalancer.server.port=8080"
+    networks:
+      - traefik
+      - intern
 
 networks:
   traefik:

@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: todoapp
+    volumes:
+      - ./volumes/db/data:/var/lib/postgresql/data
+    networks:
+      - "intern"
+
+  app:
+    image: ghcr.io/demo-hse-todo-ws2025/todo-backend:main
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/todoapp
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.$APP_NAME.entrypoints=websecure"
+      - "traefik.http.routers.$APP_NAME.rule=Host($APP_URL)"
+      - "traefik.http.routers.$APP_NAME.tls.certresolver=letsencrypt"
+      - "traefik.http.services.$APP_NAME.loadbalancer.server.port=8080"
+    networks:
+      - "traefik"
+      - "intern"
+
+
+networks:
+  traefik:
+    external: true
+  intern:
+    external: false

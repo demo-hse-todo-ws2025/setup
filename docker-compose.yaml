@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
@@ -10,8 +11,9 @@ services:
     networks:
       - intern
 
-  app:
-    image: ghcr.io/demo-hse-todo-ws2025/todo-backend:main
+  backend:
+    image: ghcr.io/demo-hse-todo-ws2025/todo-backend:$BACKEND_TAG
+    restart: unless-stopped
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/todoapp
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -19,20 +21,32 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.$APP_NAME.entrypoints=websecure"
-      - "traefik.http.routers.$APP_NAME.rule=Host($APP_URL)"
+      - "traefik.http.routers.$APP_NAME.rule=Host(`$APP_URL`)"
       - "traefik.http.routers.$APP_NAME.tls.certresolver=letsencrypt"
       - "traefik.http.services.$APP_NAME.loadbalancer.server.port=8080"
     networks:
       - traefik
       - intern
 
+  frontend:
+    image: ghcr.io/demo-hse-todo-ws2025/todo-frontend:$FRONTEND_TAG
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.$APP_NAME_FRONTEND.entrypoints=websecure"
+      - "traefik.http.routers.$APP_NAME_FRONTEND.rule=Host(`$APP_URL_FRONTEND`)"
+      - "traefik.http.routers.$APP_NAME_FRONTEND.tls.certresolver=letsencrypt"
+      - "traefik.http.services.$APP_NAME_FRONTEND.loadbalancer.server.port=80"
+    networks:
+      - traefik
+
   adminer:
     image: adminer
-    restart: always
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.$APP_NAME_ADMINER.entrypoints=websecure"
-      - "traefik.http.routers.$APP_NAME_ADMINER.rule=Host($APP_URL_ADMINER)"
+      - "traefik.http.routers.$APP_NAME_ADMINER.rule=Host(`$APP_URL_ADMINER`)"
       - "traefik.http.routers.$APP_NAME_ADMINER.tls.certresolver=letsencrypt"
       - "traefik.http.services.$APP_NAME_ADMINER.loadbalancer.server.port=8080"
     networks:
